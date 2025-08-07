@@ -1,0 +1,22 @@
+# Virtuální prostředí
+.venv/
+
+# Pycachy a dočasné soubory
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+*.tmp
+
+# OS soubory
+.DS_Store
+Thumbs.db
+
+# VS Code nastavení (volitelné – pokud projekt sdílíš s někým)
+.vscode/
+
+# Testovací výstupy nebo data
+*.json
+data/
+plots/
