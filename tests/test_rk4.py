@@ -1,9 +1,9 @@
 #import pytest
-from ..rk4 import rk4_step
+from rk4 import rk4_step
 
 
 def test_free_fall():
-    # dx/dt = v, dv/dt = -g → pád z výšky
+    # dx/dt = v, dv/dt = -g
     def deriv(state, t):
         x, v = state
         g = -9.81
@@ -25,4 +25,5 @@ def test_free_fall():
 
     assert abs(x_num - x_exact) < 1e-2
     assert abs(v_num - v_exact) < 1e-2
+
 
