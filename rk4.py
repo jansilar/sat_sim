@@ -4,7 +4,7 @@ Runge-Kutta 4th order (RK4) integrator for systems of ordinary differential equa
 
 from typing import Callable, List, Union
 
-# Typ pro stav: vektor reálných čísel (např. [x, y, vx, vy])
+# State type: (e.g. [x, y, vx, vy])
 State = Union[List[float], tuple[float, ...]]
 
 def rk4_step(
