@@ -8,7 +8,7 @@ class Satellite:
         Initialize the satellite with a given state.
 
         Parameters:
-        - initial_state: [x, y, vx, vy] in SI units (m, m, m/s, m/s)
+        - initial_state: ECI in 2D, [x, y, vx, vy] in SI units (m, m, m/s, m/s)
         - initial_time: time in seconds
         """
         self.state = initial_state
