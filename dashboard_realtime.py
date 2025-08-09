@@ -6,6 +6,7 @@ from matplotlib.patches import Circle, Rectangle
 
 from rk4 import rk4_step
 from satellite import Satellite
+from ground_station import GroundStation2D
 
 # --------------------
 # Parameters & consts
@@ -31,6 +32,8 @@ satellite = Satellite(initial_state=state, initial_time=t_sim)
 # Ground station: provide longitude_deg (and latitude if 3D — here 2D so lat=0)
 station_longitude_deg = 14.4378   # example: Prague approx lon
 station_lon0 = math.radians(station_longitude_deg)
+
+ground_station = GroundStation2D(longitude_deg=station_longitude_deg)
 
 # Data buffers
 xs, ys = [], []
@@ -128,7 +131,7 @@ try:
         ax_height.set_ylim([0, height_max])
 
         # Redraw a small marker for station (project station ECI to km)
-        gs_eci = station_position_eci(t_sim, station_lon0)
+        gs_eci = ground_station.position(OMEGA_EARTH * t_sim)
         if gs_patch is not None:
             gs_patch.remove()
         gs_patch = Rectangle((gs_eci[0] / 1000.0, gs_eci[1] / 1000.0), 200, 200, color="blue", label="Station")

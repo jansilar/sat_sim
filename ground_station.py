@@ -1,37 +1,34 @@
 import math
 
-EARTH_RADIUS = 6371e3  # in meters
-OMEGA_EARTH = 7.2921159e-5  # rad/s
-
 class GroundStation2D:
     def __init__(self, longitude_deg: float):
         self.longitude_rad = math.radians(longitude_deg)
 
-    def position(self, t: float):
+    def position(self, theta_earth: float, EARTH_RADIUS=6371e3):
         """
-        Returns the 2D ECI position of the ground station at time t (in seconds).
+        Returns the 2D ECI position of the ground station given Earth rotation.
         The ground station rotates with the Earth.
 
         Returns:
         - [x, y]: coordinates in meters
         """
-        theta = OMEGA_EARTH * t + self.longitude_rad
+        theta = theta_earth + self.longitude_rad
         x = EARTH_RADIUS * math.cos(theta)
         y = EARTH_RADIUS * math.sin(theta)
         return [x, y]
     
-    def isSatelliteVisible(self, satellite_position: list[float], t: float) -> bool:
+    def isSatelliteVisible(self, satellite_position: list[float], theta_earth: float) -> bool:
         """
-        Check if the satellite is visible from the ground station at time t.
+        Check if the satellite is visible from the ground station given Earth rotation.
 
         Parameters:
         - satellite_position: [x, y] coordinates of the satellite in meters
-        - t: time in seconds
+        - earth rotation angle theta_earth in radians
 
         Returns:
         - True if the satellite is visible, i.e. above the horizon, False otherwise
         """
-        station_pos = self.position(t)
+        station_pos = self.position(theta_earth)
         dx = satellite_position[0] - station_pos[0]
         dy = satellite_position[1] - station_pos[1]
         dot_product = dx * station_pos[0] + dy * station_pos[1]
