@@ -140,9 +140,9 @@ try:
         # update orbit axes limits if satellite drifts out of view
         cur_x = state[0] / 1000.0
         cur_y = state[1] / 1000.0
-        maxcoord = max(abs(cur_x), abs(cur_y), axis_extent)
-        ax_orbit.set_xlim(-maxcoord, maxcoord)
-        ax_orbit.set_ylim(-maxcoord, maxcoord)
+        axis_extent = max(abs(cur_x), abs(cur_y), axis_extent)
+        ax_orbit.set_xlim(-axis_extent, axis_extent)
+        ax_orbit.set_ylim(-axis_extent, axis_extent)
 
         # Draw a small marker for station (project station ECI to km)
         gs_eci = station_position_eci(t_sim, station_lon0)
