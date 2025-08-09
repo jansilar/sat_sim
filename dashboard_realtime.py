@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle
 
 from rk4 import rk4_step
-from orbit_dynamics import orbit_derivs   # uses SI units: meters, seconds
-# If you prefer to use the Satellite class, you can import it and drive it instead
+from satellite import Satellite
 
 # --------------------
 # Parameters & consts
@@ -26,6 +25,8 @@ r0 = R_EARTH + altitude
 v0 = math.sqrt(GM / r0)
 state = [r0, 0.0, 0.0, v0]      # [x, y, vx, vy] in ECI (m, m/s)
 t_sim = 0.0
+
+satellite = Satellite(initial_state=state, initial_time=t_sim)
 
 # Ground station: provide longitude_deg (and latitude if 3D — here 2D so lat=0)
 station_longitude_deg = 14.4378   # example: Prague approx lon
@@ -90,31 +91,14 @@ def station_position_eci(t: float, lon0_rad: float, R=R_EARTH):
     y = R * math.sin(theta)
     return np.array([x, y])
 
-def compute_groundtrack_and_height(sat_state, t):
-    """Return (lon_deg, lat_deg, height above Earth for 2D model (lat always 0)."""
-    # ECI sat pos
-    sx, sy = sat_state[0], sat_state[1]
-    # Convert to ECEF by rotating by theta = omega * t (ECI->ECEF)
-    theta = OMEGA_EARTH * t
-    x_ecef = sx * math.cos(theta) + sy * math.sin(theta)
-    y_ecef = -sx * math.sin(theta) + sy * math.cos(theta)
-
-    # lat/lon (2D: lat ~ 0)
-    lat = 0.0
-    lon = math.degrees(math.atan2(y_ecef, x_ecef))
-
-    # height above Earth surface
-    height = math.sqrt(x_ecef**2 + y_ecef**2) - R_EARTH
-
-    return lon, lat, height
-
 # Animation loop (simple real-time loop)
 try:
     while True:
         # Record state
-        xs.append(state[0] / 1000.0)   # km
-        ys.append(state[1] / 1000.0)
-        lon_deg, lat_deg, height = compute_groundtrack_and_height(state, t_sim)
+        xs.append(satellite.get_x() / 1000.0)   # km
+        ys.append(satellite.get_y() / 1000.0)
+        lon_deg, lat_deg = satellite.ground_track(OMEGA_EARTH * t_sim)
+        height = satellite.get_height()  # in meters
         lons.append(lon_deg)
         lats.append(lat_deg)
         times.append(t_sim)
@@ -132,8 +116,8 @@ try:
         hight_line.set_data(np.array(times)/60.0, heights)
 
         # update orbit axes limits if satellite drifts out of view
-        cur_x = state[0] / 1000.0
-        cur_y = state[1] / 1000.0
+        cur_x = satellite.get_x() / 1000.0
+        cur_y = satellite.get_y() / 1000.0
         axis_extent_orbit = max(abs(cur_x), abs(cur_y), axis_extent_orbit)
         ax_orbit.set_xlim(-axis_extent_orbit, axis_extent_orbit)
         ax_orbit.set_ylim(-axis_extent_orbit, axis_extent_orbit)
@@ -156,7 +140,7 @@ try:
         plt.pause(0.001)
 
         # advance simulation
-        state = rk4_step(orbit_derivs, state, t_sim, dt)
+        satellite.step(dt)
         t_sim += dt
 
         # keep the animation at roughly human speed
