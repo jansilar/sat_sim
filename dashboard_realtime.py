@@ -2,7 +2,7 @@ import math
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle
+from matplotlib.patches import Circle, Rectangle
 
 from rk4 import rk4_step
 from orbit_dynamics import orbit_derivs   # uses SI units: meters, seconds
@@ -65,6 +65,7 @@ ax_elev.grid(True)
 # Plot the Earth circle in orbit view (in km for nicer scale)
 earth_patch = Circle((0, 0), R_EARTH / 1000.0, color="lightblue", zorder=0)
 ax_orbit.add_patch(earth_patch)
+gs_patch = None  # Ground station patch
 
 # Artists we will update
 orbit_line, = ax_orbit.plot([], [], "r-", lw=1)
@@ -145,14 +146,17 @@ try:
 
         # Draw a small marker for station (project station ECI to km)
         gs_eci = station_position_eci(t_sim, station_lon0)
-        # remove previous station marker by re-plotting (cheap but ok)
-        #ax_orbit.collections.clear()
-        for patch in ax_orbit.patches:
-#            if isinstance(patch, Circle) and patch.get_radius() == R_EARTH / 1000.0:
-            patch.remove()
-        earth_patch = Circle((0, 0), R_EARTH / 1000.0, color="lightblue", zorder=0)
-        ax_orbit.add_patch(earth_patch)
-        ax_orbit.plot(gs_eci[0] / 1000.0, gs_eci[1] / 1000.0, "bs", ms=6, label="Station")
+
+        # if earth_patch is not None:
+        #     earth_patch.remove()
+        # earth_patch = Circle((0, 0), R_EARTH / 1000.0, color="lightblue", zorder=0)
+        # ax_orbit.add_patch(earth_patch)
+
+        # Redraw ground station patch
+        if gs_patch is not None:
+            gs_patch.remove()
+        gs_patch = Rectangle((gs_eci[0] / 1000.0, gs_eci[1] / 1000.0), 200, 200, color="blue", label="Station")
+        ax_orbit.add_patch(gs_patch)
 
         # redraw
         fig.canvas.draw()
