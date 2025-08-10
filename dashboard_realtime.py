@@ -23,7 +23,7 @@ history_max = 2000              # keep last N points for drawing
 # Satellite initial conditions (circular-ish)
 altitude = 500e3                # 500 km
 r0 = R_EARTH + altitude
-v0 = math.sqrt(GM / r0)
+v0 = math.sqrt(GM / r0)*1.1
 state = [r0, 0.0, 0.0, v0]      # [x, y, vx, vy] in ECI (m, m/s)
 t_sim = 0.0
 
@@ -40,6 +40,7 @@ xs, ys = [], []
 lons, lats = [], []
 times = []
 heights = []
+velocities = []
 
 # Prepare figure and axes
 fig = plt.figure(figsize=(14, 6))
@@ -68,6 +69,13 @@ height_max = 1000
 ax_height.set_ylim([0, height_max])
 ax_height.grid(True)
 
+# Add secondary y-axis for velocity
+ax_velocity = ax_height.twinx()
+ax_velocity.set_ylabel("Velocity [km/s]")
+velocity_max = 10
+ax_velocity.set_ylim([0, velocity_max])
+
+
 # Plot the Earth circle in orbit view (in km for nicer scale)
 earth_patch = Circle((0, 0), R_EARTH / 1000.0, color="lightblue", zorder=0)
 ax_orbit.add_patch(earth_patch)
@@ -80,6 +88,7 @@ sat_point, = ax_orbit.plot([], [], "ro", ms=6)
 track_line, = ax_track.plot([], [], "g-", lw=1)
 track_point, = ax_track.plot([], [], "gx", ms=6)
 hight_line, = ax_height.plot([], [], "b-")
+velocity_line, = ax_velocity.plot([], [], "r-")
 
 # Auto-scaling orbit axes initially
 axis_extent_orbit = (r0 * 1.2) / 1000.0  # km
@@ -106,6 +115,7 @@ try:
         lats.append(lat_deg)
         times.append(t_sim)
         heights.append(height/1000.0)  # km
+        velocities.append(satellite.get_v() / 1000.0)  # km/s
 
         # Keep buffers manageable
         if len(xs) > history_max:
@@ -117,6 +127,7 @@ try:
         track_line.set_data(lons, lats)
         track_point.set_data([lon_deg], [lat_deg])
         hight_line.set_data(np.array(times)/60.0, heights)
+        velocity_line.set_data(np.array(times)/60.0, velocities)
 
         # update orbit axes limits if satellite drifts out of view
         cur_x = satellite.get_x() / 1000.0
@@ -129,6 +140,10 @@ try:
         ax_height.set_xlim([0, max(times)/60.0 + 1])
         height_max = max(height/1000.0, height_max)
         ax_height.set_ylim([0, height_max])
+
+        # Update velocity plot limits
+        velocity_max = max(satellite.get_v() / 1000.0, velocity_max)
+        ax_velocity.set_ylim([0, velocity_max])
 
         # Redraw a small marker for station (project station ECI to km)
         gs_eci = ground_station.position(OMEGA_EARTH * t_sim)

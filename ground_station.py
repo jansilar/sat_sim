@@ -9,6 +9,10 @@ class GroundStation2D:
         Returns the 2D ECI position of the ground station given Earth rotation.
         The ground station rotates with the Earth.
 
+        Parameters:
+        - theta_earth: Earth rotation angle in radians
+        - EARTH_RADIUS: radius of the Earth in meters (default: 6371e3)
+
         Returns:
         - [x, y]: coordinates in meters
         """
@@ -17,7 +21,7 @@ class GroundStation2D:
         y = EARTH_RADIUS * math.sin(theta)
         return [x, y]
     
-    def isSatelliteVisible(self, satellite_position: list[float], theta_earth: float) -> bool:
+    def is_satellite_visible(self, satellite_position: list[float], theta_earth: float) -> bool:
         """
         Check if the satellite is visible from the ground station given Earth rotation.
 
@@ -28,6 +32,7 @@ class GroundStation2D:
         Returns:
         - True if the satellite is visible, i.e. above the horizon, False otherwise
         """
+        # TODO: fix the calculation (Copillot sayes in review that it is wrong.)
         station_pos = self.position(theta_earth)
         dx = satellite_position[0] - station_pos[0]
         dy = satellite_position[1] - station_pos[1]

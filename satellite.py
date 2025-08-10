@@ -71,6 +71,12 @@ class Satellite:
         """
         return self.state[3]
     
+    def get_v(self) -> float:
+        """
+        Return the current speed of the satellite.
+        """
+        return math.sqrt(self.get_vx()**2 + self.get_vy()**2)
+    
     def get_t(self) -> float:
         """
         Return the current time of the simulation.
