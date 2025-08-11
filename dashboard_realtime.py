@@ -143,7 +143,8 @@ try:
         times_min.append(t_sim/60.0)  # convert to minutes
         height = satellite.get_height()/1000  # in km
         heights.append(height)  # km
-        velocities.append(satellite.get_v() / 1000.0)  # km/s
+        v = satellite.get_v()/1000  # km/s
+        velocities.append(v)  # km/s
         throttles.append(throttle)
 
         # Keep buffers manageable
@@ -177,7 +178,7 @@ try:
         ax_height.set_ylim([0, height_max])
 
         # Update velocity plot limits
-        velocity_max = max(satellite.get_v() / 1000.0, velocity_max)
+        velocity_max = max(v, velocity_max)
         ax_velocity.set_ylim([0, velocity_max])
 
         # Update throttle plot limits
