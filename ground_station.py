@@ -32,7 +32,6 @@ class GroundStation2D:
         Returns:
         - True if the satellite is visible, i.e. above the horizon, False otherwise
         """
-        # TODO: fix the calculation (Copillot sayes in review that it is wrong.)
         station_pos = self.position(theta_earth)
         dx = satellite_position[0] - station_pos[0]
         dy = satellite_position[1] - station_pos[1]
