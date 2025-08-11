@@ -4,7 +4,7 @@ from rk4 import rk4_step
 from orbit_dynamics import orbit_derivs
 
 class Satellite:
-    def __init__(self, initial_state: List[float], initial_time: float = 0.0):
+    def __init__(self, initial_state: List[float], initial_time: float = 0.0, m = 500.0, max_engine_power = 100e3):
         """
         Initialize the satellite with a given state.
 
@@ -14,16 +14,18 @@ class Satellite:
         """
         self.state = initial_state
         self.t = initial_time
+        self.m = m
+        self.max_engine_power = max_engine_power
         self.history = [(initial_time, initial_state.copy())]
 
-    def step(self, dt: float):
+    def step(self, dt: float, throttle: float = 0.0):
         """
         Advance the simulation by one time step using RK4.
 
         Parameters:
         - dt: time step in seconds
         """
-        self.state = rk4_step(orbit_derivs, self.state, self.t, dt)
+        self.state = rk4_step(orbit_derivs, self.state, [throttle], [self.m, self.max_engine_power], self.t, dt)
         self.t += dt
         self.history.append((self.t, self.state.copy()))
 

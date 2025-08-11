@@ -27,7 +27,12 @@ v0 = math.sqrt(GM / r0)*1.1
 state = [r0, 0.0, 0.0, v0]      # [x, y, vx, vy] in ECI (m, m/s)
 t_sim = 0.0
 
-satellite = Satellite(initial_state=state, initial_time=t_sim)
+throttle = 0.0  # 0 = off, 1 = max power
+
+max_engine_power = 100e3 # W, maximal engine power
+m_satellite = 500.0  # kg, mass of the satellite
+
+satellite = Satellite(initial_state=state, initial_time=t_sim, m=m_satellite, max_engine_power=max_engine_power)
 
 # Ground station: provide longitude_deg (and latitude if 3D — here 2D so lat=0)
 station_longitude_deg = 14.4378   # example: Prague approx lon
@@ -95,13 +100,17 @@ axis_extent_orbit = (r0 * 1.2) / 1000.0  # km
 ax_orbit.set_xlim(-axis_extent_orbit, axis_extent_orbit)
 ax_orbit.set_ylim(-axis_extent_orbit, axis_extent_orbit)
 
-# Helper functions
-def station_position_eci(t: float, lon0_rad: float, R=R_EARTH):
-    """Compute ground station position in ECI frame at time t by rotating fixed Earth coordinates."""
-    theta = OMEGA_EARTH * t + lon0_rad
-    x = R * math.cos(theta)
-    y = R * math.sin(theta)
-    return np.array([x, y])
+def on_key(event):
+    global throttle
+    if event.key == "up":
+        throttle = min(1.0, throttle + 0.1)  # increase throttle within limits
+    elif event.key == "down":
+        throttle = max(-1.0, throttle - 0.1)  # decrease throttle
+    elif event.key == "space":
+        throttle = 0.0   # reset throttle
+    print(f"Throttle: {throttle:.2f} m/s^2")
+
+fig.canvas.mpl_connect("key_press_event", on_key)
 
 # Animation loop (simple real-time loop)
 try:
@@ -158,7 +167,7 @@ try:
         plt.pause(0.001)
 
         # advance simulation
-        satellite.step(dt)
+        satellite.step(dt, throttle)
         t_sim += dt
 
         # keep the animation at roughly human speed
