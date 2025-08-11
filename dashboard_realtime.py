@@ -16,7 +16,7 @@ GM = 3.98589196e14              # m^3/s^2
 OMEGA_EARTH = 7.2921159e-5      # rad/s (sidereal)
 
 # Simulation settings
-dt = 50.0                        # simulation step (s) per frame
+dt = 60.0                        # simulation step (s) per frame
 real_time_sleep = 0.02          # pause between frames (s) — controls animation speed
 history_max = 2000              # keep last N points for drawing
 
@@ -86,7 +86,7 @@ ax_throttle.set_title("Engine throttle vs time")
 ax_throttle.set_xlabel("Time [min]")
 ax_throttle.set_ylabel("Engine throttle [1]")
 ax_throttle.set_xlim([0, 60])
-ax_throttle.set_ylim([-1, 1])
+ax_throttle.set_ylim([-1.02, 1.02])
 ax_throttle.grid(True)
 
 
@@ -147,7 +147,14 @@ try:
 
         # Keep buffers manageable
         if len(xs) > history_max:
-            xs.pop(0); ys.pop(0); lons.pop(0); lats.pop(0); times.pop(0); heights.pop(0)
+            xs.pop(0)
+            ys.pop(0)
+            lons.pop(0)
+            lats.pop(0)
+            times.pop(0)
+            heights.pop(0)
+            velocities.pop(0)
+            throttles.pop(0)
 
         # Update artists
         orbit_line.set_data(xs, ys)
@@ -166,7 +173,7 @@ try:
         ax_orbit.set_ylim(-axis_extent_orbit, axis_extent_orbit)
 
         # Update height plot limits
-        ax_height.set_xlim([0, max(times)/60.0 + 1])
+        ax_height.set_xlim([times[0]/60, t_sim/60.0 + 1])
         height_max = max(height/1000.0, height_max)
         ax_height.set_ylim([0, height_max])
 
@@ -175,7 +182,7 @@ try:
         ax_velocity.set_ylim([0, velocity_max])
 
         # Update throttle plot limits
-        ax_throttle.set_xlim([0, t_sim/60.0 + 1])
+        ax_throttle.set_xlim([times[0]/60, t_sim/60.0 + 1])
 
         # Redraw a small marker for station (project station ECI to km)
         gs_eci = ground_station.position(OMEGA_EARTH * t_sim)
