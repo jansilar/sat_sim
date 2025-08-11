@@ -1,10 +1,8 @@
 import math
 import time
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle
 
-from rk4 import rk4_step
 from satellite import Satellite
 from ground_station import GroundStation2D
 
@@ -36,14 +34,13 @@ satellite = Satellite(initial_state=state, initial_time=t_sim, m=m_satellite, ma
 
 # Ground station: provide longitude_deg (and latitude if 3D — here 2D so lat=0)
 station_longitude_deg = 14.4378   # example: Prague approx lon
-station_lon0 = math.radians(station_longitude_deg)
 
 ground_station = GroundStation2D(longitude_deg=station_longitude_deg)
 
 # Data buffers
 xs, ys = [], []
 lons, lats = [], []
-times = []
+times_min = []
 heights = []
 velocities = []
 throttles = []
@@ -91,13 +88,13 @@ ax_throttle.grid(True)
 
 
 
-# Plot the Earth circle in orbit view (in km for nicer scale)
+# Plot the Earth circle in orbit view (in km)
 earth_patch = Circle((0, 0), R_EARTH / 1000.0, color="lightblue", zorder=0)
 ax_orbit.add_patch(earth_patch)
 gs_patch = None  # Ground station patch
 
 
-# Artists we will update
+# Set up initial plot elements
 orbit_line, = ax_orbit.plot([], [], "r-", lw=1)
 sat_point, = ax_orbit.plot([], [], "ro", ms=6)
 track_line, = ax_track.plot([], [], "g-", lw=1)
@@ -122,11 +119,13 @@ def on_key(event):
     global throttle
     if event.key == "up":
         throttle = min(1.0, throttle + 0.1)  # increase throttle within limits
+        print(f"Throttle: {throttle:.2f} m/s^2")
     elif event.key == "down":
         throttle = max(-1.0, throttle - 0.1)  # decrease throttle
+        print(f"Throttle: {throttle:.2f} m/s^2")
     elif event.key == "space":
         throttle = 0.0   # reset throttle
-    print(f"Throttle: {throttle:.2f} m/s^2")
+        print(f"Throttle: {throttle:.2f} m/s^2")
 
 fig.canvas.mpl_connect("key_press_event", on_key)
 
@@ -134,14 +133,16 @@ fig.canvas.mpl_connect("key_press_event", on_key)
 try:
     while True:
         # Record state
-        xs.append(satellite.get_x() / 1000.0)   # km
-        ys.append(satellite.get_y() / 1000.0)
+        sat_x = satellite.get_x() / 1000.0  # convert to km
+        sat_y = satellite.get_y() / 1000.0
+        xs.append(sat_x)
+        ys.append(sat_y)
         lon_deg, lat_deg = satellite.ground_track(OMEGA_EARTH * t_sim)
-        height = satellite.get_height()  # in meters
         lons.append(lon_deg)
         lats.append(lat_deg)
-        times.append(t_sim)
-        heights.append(height/1000.0)  # km
+        times_min.append(t_sim/60.0)  # convert to minutes
+        height = satellite.get_height()/1000  # in km
+        heights.append(height)  # km
         velocities.append(satellite.get_v() / 1000.0)  # km/s
         throttles.append(throttle)
 
@@ -151,30 +152,28 @@ try:
             ys.pop(0)
             lons.pop(0)
             lats.pop(0)
-            times.pop(0)
+            times_min.pop(0)
             heights.pop(0)
             velocities.pop(0)
             throttles.pop(0)
 
-        # Update artists
+        # Update plot data
         orbit_line.set_data(xs, ys)
-        sat_point.set_data([xs[-1]], [ys[-1]])
+        sat_point.set_data([sat_x], [sat_y])
         track_line.set_data(lons, lats)
         track_point.set_data([lon_deg], [lat_deg])
-        hight_line.set_data(np.array(times)/60.0, heights)
-        velocity_line.set_data(np.array(times)/60.0, velocities)
-        throtte_line.set_data(np.array(times)/60.0, throttles)
+        hight_line.set_data(times_min, heights)
+        velocity_line.set_data(times_min, velocities)
+        throtte_line.set_data(times_min, throttles)
 
         # update orbit axes limits if satellite drifts out of view
-        cur_x = satellite.get_x() / 1000.0
-        cur_y = satellite.get_y() / 1000.0
-        axis_extent_orbit = max(abs(cur_x), abs(cur_y), axis_extent_orbit)
+        axis_extent_orbit = max(abs(sat_x), abs(sat_y), axis_extent_orbit)
         ax_orbit.set_xlim(-axis_extent_orbit, axis_extent_orbit)
         ax_orbit.set_ylim(-axis_extent_orbit, axis_extent_orbit)
 
         # Update height plot limits
-        ax_height.set_xlim([times[0]/60, t_sim/60.0 + 1])
-        height_max = max(height/1000.0, height_max)
+        ax_height.set_xlim([times_min[0], t_sim/60.0 + 1])
+        height_max = max(height, height_max)
         ax_height.set_ylim([0, height_max])
 
         # Update velocity plot limits
@@ -182,9 +181,9 @@ try:
         ax_velocity.set_ylim([0, velocity_max])
 
         # Update throttle plot limits
-        ax_throttle.set_xlim([times[0]/60, t_sim/60.0 + 1])
+        ax_throttle.set_xlim([times_min[0], t_sim/60.0 + 1])
 
-        # Redraw a small marker for station (project station ECI to km)
+        # Redraw  marker for station (project station ECI to km)
         gs_eci = ground_station.position(OMEGA_EARTH * t_sim)
         if gs_patch is not None:
             gs_patch.remove()
@@ -195,11 +194,11 @@ try:
         fig.canvas.draw()
         fig.canvas.flush_events()
         if not satellite.is_above_ground(R_EARTH):
-            fig.text(0.5, 0.5, "SATELLITE HAS HIT THE GROUND!", color="red", fontsize=24, ha="center", va="center", zorder=100)
+            fig.text(0.5, 0.5, "SATELLITE HAS HIT THE GROUND!", color="red", fontsize=24, fontweight="bold", ha="center", va="center", zorder=100)
             fig.canvas.draw()
-            #plt.pause(10)
             plt.waitforbuttonpress()  # waits until key or mouse button pressed
             break
+
         plt.pause(0.001)
 
         # advance simulation

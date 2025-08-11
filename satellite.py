@@ -4,13 +4,15 @@ from rk4 import rk4_step
 from orbit_dynamics import orbit_derivs
 
 class Satellite:
-    def __init__(self, initial_state: List[float], initial_time: float = 0.0, m = 500.0, max_engine_power = 100e3):
+    def __init__(self, initial_state: List[float], initial_time: float = 0.0, m: float = 500.0, max_engine_power: float = 100e3):
         """
         Initialize the satellite with a given state.
 
         Parameters:
         - initial_state: ECI in 2D, [x, y, vx, vy] in SI units (m, m, m/s, m/s)
         - initial_time: time in seconds
+        - m: mass of the satellite in kg
+        - max_engine_power: maximum engine power in watts
         """
         self.state = initial_state
         self.t = initial_time
@@ -24,6 +26,7 @@ class Satellite:
 
         Parameters:
         - dt: time step in seconds
+        - throttle: engine throttle (-1.0 to 1.0, where -1.0 is maximum breaking power, 1.0 is maximum accelerating power)
         """
         self.state = rk4_step(orbit_derivs, self.state, [throttle], [self.m, self.max_engine_power], self.t, dt)
         self.t += dt
@@ -75,7 +78,7 @@ class Satellite:
     
     def get_v(self) -> float:
         """
-        Return the current speed of the satellite.
+        Return the current absolute velocity of the satellite.
         """
         return math.sqrt(self.get_vx()**2 + self.get_vy()**2)
     

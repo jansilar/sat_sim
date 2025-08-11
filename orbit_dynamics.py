@@ -24,12 +24,12 @@ def orbit_derivs(state: State, input: Input, params: Params, t: float) -> State:
     x, y, vx, vy = state
     throttle = input[0] if input else 0.0 # Throttle input
     mass = params[0] if params else 0.0  # Mass of the satellite
-    max_engine_power = params[1] if len(params) > 1 else 1.0  # Max engine power
+    max_engine_power = params[1] if len(params) > 1 else 0.0  # Max engine power
    
     r = (x**2 + y**2)**0.5  # Distance from the center of the Earth
     v = (vx**2 + vy**2)**0.5  # Speed
 
-    a_engine = throttle * max_engine_power / (v * mass) if v > 0 else 0  # Engine acceleration
+    a_engine = throttle * max_engine_power / (v * mass) if v > 0 else 0  # Acceleration due to engine thrust
 
     # Gravitational + engine acceleration
     ax = -G * M * x / r**3 + (vx/v * a_engine if v > 0 else 0.0)
