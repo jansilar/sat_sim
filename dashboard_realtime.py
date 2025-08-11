@@ -23,7 +23,7 @@ history_max = 2000              # keep last N points for drawing
 # Satellite initial conditions (circular-ish)
 altitude = 500e3                # 500 km
 r0 = R_EARTH + altitude
-v0 = math.sqrt(GM / r0)*1.1
+v0 = math.sqrt(GM / r0)
 state = [r0, 0.0, 0.0, v0]      # [x, y, vx, vy] in ECI (m, m/s)
 t_sim = 0.0
 
@@ -46,18 +46,19 @@ lons, lats = [], []
 times = []
 heights = []
 velocities = []
+throttles = []
 
 # Prepare figure and axes
 fig = plt.figure(figsize=(14, 6))
 plt.subplots_adjust(wspace=0.35)
 
-ax_orbit = fig.add_subplot(1, 3, 1)
+ax_orbit = fig.add_subplot(2, 2, 1)
 ax_orbit.set_aspect("equal")
 ax_orbit.set_title("Orbit (ECI)")
 ax_orbit.set_xlabel("x [km]")
 ax_orbit.set_ylabel("y [km]")
 
-ax_track = fig.add_subplot(1, 3, 2)
+ax_track = fig.add_subplot(2, 2, 2)
 ax_track.set_title("Ground track")
 ax_track.set_xlabel("Longitude [°]")
 ax_track.set_ylabel("Latitude [°]")
@@ -65,7 +66,7 @@ ax_track.set_xlim([-180, 180])
 ax_track.set_ylim([-90, 90])
 ax_track.grid(True)
 
-ax_height = fig.add_subplot(1, 3, 3)
+ax_height = fig.add_subplot(2, 2, 3)
 ax_height.set_title("Height vs time")
 ax_height.set_xlabel("Time [min]")
 ax_height.set_ylabel("Height above Earth [km]")
@@ -79,6 +80,15 @@ ax_velocity = ax_height.twinx()
 ax_velocity.set_ylabel("Velocity [km/s]")
 velocity_max = 10
 ax_velocity.set_ylim([0, velocity_max])
+
+ax_throttle = fig.add_subplot(2, 2, 4)
+ax_throttle.set_title("Engine throttle vs time")
+ax_throttle.set_xlabel("Time [min]")
+ax_throttle.set_ylabel("Engine throttle [1]")
+ax_throttle.set_xlim([0, 60])
+ax_throttle.set_ylim([-1, 1])
+ax_throttle.grid(True)
+
 
 
 # Plot the Earth circle in orbit view (in km for nicer scale)
@@ -94,11 +104,19 @@ track_line, = ax_track.plot([], [], "g-", lw=1)
 track_point, = ax_track.plot([], [], "gx", ms=6)
 hight_line, = ax_height.plot([], [], "b-")
 velocity_line, = ax_velocity.plot([], [], "r-")
+throtte_line, = ax_throttle.plot([], [], "m-")
 
 # Auto-scaling orbit axes initially
 axis_extent_orbit = (r0 * 1.2) / 1000.0  # km
 ax_orbit.set_xlim(-axis_extent_orbit, axis_extent_orbit)
 ax_orbit.set_ylim(-axis_extent_orbit, axis_extent_orbit)
+
+# Add control instructions as a text note below the throttle plot
+ax_throttle.text(
+    0.5, 0.1,
+    "Throttle: up arrow = increase, down arrow = decrease",
+    ha="center", va="top", fontsize=10, color="black", fontweight="bold", transform=ax_throttle.transAxes
+)
 
 def on_key(event):
     global throttle
@@ -125,6 +143,7 @@ try:
         times.append(t_sim)
         heights.append(height/1000.0)  # km
         velocities.append(satellite.get_v() / 1000.0)  # km/s
+        throttles.append(throttle)
 
         # Keep buffers manageable
         if len(xs) > history_max:
@@ -137,6 +156,7 @@ try:
         track_point.set_data([lon_deg], [lat_deg])
         hight_line.set_data(np.array(times)/60.0, heights)
         velocity_line.set_data(np.array(times)/60.0, velocities)
+        throtte_line.set_data(np.array(times)/60.0, throttles)
 
         # update orbit axes limits if satellite drifts out of view
         cur_x = satellite.get_x() / 1000.0
@@ -154,6 +174,9 @@ try:
         velocity_max = max(satellite.get_v() / 1000.0, velocity_max)
         ax_velocity.set_ylim([0, velocity_max])
 
+        # Update throttle plot limits
+        ax_throttle.set_xlim([0, t_sim/60.0 + 1])
+
         # Redraw a small marker for station (project station ECI to km)
         gs_eci = ground_station.position(OMEGA_EARTH * t_sim)
         if gs_patch is not None:
@@ -164,6 +187,12 @@ try:
         # redraw
         fig.canvas.draw()
         fig.canvas.flush_events()
+        if not satellite.is_above_ground(R_EARTH):
+            fig.text(0.5, 0.5, "SATELLITE HAS HIT THE GROUND!", color="red", fontsize=24, ha="center", va="center", zorder=100)
+            fig.canvas.draw()
+            #plt.pause(10)
+            plt.waitforbuttonpress()  # waits until key or mouse button pressed
+            break
         plt.pause(0.001)
 
         # advance simulation
@@ -172,6 +201,8 @@ try:
 
         # keep the animation at roughly human speed
         time.sleep(real_time_sleep)
+
+    
 
 except KeyboardInterrupt:
     print("\nAnimation stopped by user.")

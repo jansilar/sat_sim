@@ -104,3 +104,9 @@ class Satellite:
         x, y = self.get_x(), self.get_y()
         height = math.sqrt(x**2 + y**2) - R_EARTH
         return height  # return in meters
+    
+    def is_above_ground(self, R_EARTH = 6371e3) -> bool:
+        """
+        Check if the satellite is above the ground.
+        """
+        return self.get_height(R_EARTH) > 0
