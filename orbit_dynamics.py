@@ -29,7 +29,7 @@ def orbit_derivs(state: State, input: Input, params: Params, t: float) -> State:
     r = (x**2 + y**2)**0.5  # Distance from the center of the Earth
     v = (vx**2 + vy**2)**0.5  # Speed
 
-    a_engine = throttle * max_engine_power / (v * mass) if v > 0 else 0  # Acceleration due to engine thrust
+    a_engine = (throttle * max_engine_power / (v * mass)) if v*mass > 0 else 0  # Acceleration due to engine thrust
 
     # Gravitational + engine acceleration
     ax = -G * M * x / r**3 + (vx/v * a_engine if v > 0 else 0.0)

@@ -4,7 +4,7 @@ from rk4 import rk4_step
 
 def test_free_fall():
     # dx/dt = v, dv/dt = -g
-    def deriv(state, t):
+    def deriv(state, input, params, t):
         x, v = state
         g = -9.81
         return [v, g]
@@ -16,7 +16,7 @@ def test_free_fall():
     state = [x0, v0]
 
     for _ in range(10):  # t = 1.0 s
-        state = rk4_step(deriv, state, t, dt)
+        state = rk4_step(deriv, state, [], [], t, dt)
         t += dt
 
     x_num, v_num = state

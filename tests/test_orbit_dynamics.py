@@ -8,7 +8,7 @@ def test_orbit_derivs():
     # Expected acceleration magnitude ~ GM / r^2
     state = [7000.0, 0.0, 0.0, 7.5460491]
     t = 0.0
-    deriv = orbit_derivs(state, t)
+    deriv = orbit_derivs(state, [], [], t)
     MG = 6.67430e-11 * 5.972e24
     expected_acc_mag = MG / (7000.0**2)
     acc_mag = (deriv[2]**2 + deriv[3]**2)**0.5

@@ -19,10 +19,10 @@ def test_GroundStation2D():
     
     # Test visibility with a satellite above the horizon
     satellite_position = [expected_x + 1000, expected_y + 1000]  # Satellite slightly above the ground station
-    assert ground_station.isSatelliteVisible(satellite_position, t), "Satellite should be visible"
+    assert ground_station.is_satellite_visible(satellite_position, t), "Satellite should be visible"
     
     # Test visibility with a satellite below the horizon
     satellite_position = [expected_x - 1000, expected_y - 1000]  # Satellite below the ground station
-    assert not ground_station.isSatelliteVisible(satellite_position, t), "Satellite should not be visible"
+    assert not ground_station.is_satellite_visible(satellite_position, t), "Satellite should not be visible"
 
     print("Test passed: GroundStation2D computes correct position and visibility.")
