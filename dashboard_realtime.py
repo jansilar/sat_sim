@@ -2,6 +2,7 @@ import math
 import time
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle
+import streamlit as st
 
 from satellite import Satellite
 from ground_station import GroundStation2D
@@ -45,6 +46,8 @@ heights = []
 velocities = []
 throttles = []
 
+st.title("Satellite Simulation Dashboard")
+plot_area = st.empty()  # Placeholder for the plot
 # Prepare figure and axes
 fig = plt.figure(figsize=(14, 6))
 plt.subplots_adjust(wspace=0.35)
@@ -137,6 +140,7 @@ def on_key(event):
         print(f"Throttle: {throttle:.2f} m/s^2")
 
 fig.canvas.mpl_connect("key_press_event", on_key)
+plot_area.pyplot(fig)
 
 # Simulation loop
 try:
@@ -207,6 +211,7 @@ try:
         # redraw
         fig.canvas.draw()
         fig.canvas.flush_events()
+        plot_area.pyplot(fig)
         if not satellite.is_above_ground(R_EARTH):
             fig.text(0.5, 0.5, "SATELLITE HAS HIT THE GROUND!", color="red", fontsize=24, fontweight="bold", ha="center", va="center", zorder=100)
             fig.canvas.draw()
