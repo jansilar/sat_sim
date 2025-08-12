@@ -14,14 +14,14 @@ GM = 3.98589196e14              # m^3/s^2
 OMEGA_EARTH = 7.2921159e-5      # rad/s (sidereal)
 
 # Simulation settings
-dt = 60.0                        # simulation step (s) per frame
-real_time_sleep = 0.02          # pause between frames (s) — controls animation speed
+dt = 60.0                       # simulation step (s) per frame
+real_time_sleep = 0.0           # pause between frames (s) — controls animation speed
 history_max = 2000              # keep last N points for drawing
 
 # Satellite initial conditions (circular-ish)
 altitude = 500e3                # 500 km
-r0 = R_EARTH + altitude
-v0 = math.sqrt(GM / r0)
+r0 = R_EARTH + altitude         # m, initial radius
+v0 = math.sqrt(GM / r0)         # m/s, circular orbital velocity
 state = [r0, 0.0, 0.0, v0]      # [x, y, vx, vy] in ECI (m, m/s)
 t_sim = 0.0
 
@@ -32,8 +32,8 @@ m_satellite = 500.0  # kg, mass of the satellite
 
 satellite = Satellite(initial_state=state, initial_time=t_sim, m=m_satellite, max_engine_power=max_engine_power)
 
-# Ground station: provide longitude_deg (and latitude if 3D — here 2D so lat=0)
-station_longitude_deg = 14.4378   # example: Prague approx lon
+# Ground station:
+station_longitude_deg = 14.4378   # Prague approx lon
 
 ground_station = GroundStation2D(longitude_deg=station_longitude_deg)
 
@@ -99,8 +99,10 @@ orbit_line, = ax_orbit.plot([], [], "r-", lw=1)
 sat_point, = ax_orbit.plot([], [], "ro", ms=6)
 track_line, = ax_track.plot([], [], "g-", lw=1)
 track_point, = ax_track.plot([], [], "gx", ms=6)
-hight_line, = ax_height.plot([], [], "b-")
-velocity_line, = ax_velocity.plot([], [], "r-")
+hight_line, = ax_height.plot([], [], "b-", label="Height")
+ax_height.legend(loc="upper left")
+velocity_line, = ax_velocity.plot([], [], "r-", label="Velocity")
+ax_velocity.legend(loc="upper right")
 throtte_line, = ax_throttle.plot([], [], "m-")
 
 # Auto-scaling orbit axes initially
@@ -114,6 +116,13 @@ ax_throttle.text(
     "Throttle: up arrow = increase, down arrow = decrease",
     ha="center", va="top", fontsize=10, color="black", fontweight="bold", transform=ax_throttle.transAxes
 )
+# Creat visibility label next to the orbit plot
+visibility_label = ax_orbit.text(
+    -0.5, 0.9,
+    "",
+    ha="center", va="top", fontsize=10, color="black", fontweight="bold", transform=ax_orbit.transAxes
+)
+
 
 def on_key(event):
     global throttle
@@ -129,7 +138,7 @@ def on_key(event):
 
 fig.canvas.mpl_connect("key_press_event", on_key)
 
-# Animation loop (simple real-time loop)
+# Simulation loop
 try:
     while True:
         # Record state
@@ -190,6 +199,10 @@ try:
             gs_patch.remove()
         gs_patch = Rectangle((gs_eci[0] / 1000.0, gs_eci[1] / 1000.0), 200, 200, color="blue", label="Station")
         ax_orbit.add_patch(gs_patch)
+
+        # Update the text of the satellite visibility label
+        visibility_text = "Satellite is visible" if ground_station.is_satellite_visible([satellite.get_x(),satellite.get_y()], OMEGA_EARTH * t_sim) else "Satellite is not visible"
+        visibility_label.set_text(visibility_text)
 
         # redraw
         fig.canvas.draw()
