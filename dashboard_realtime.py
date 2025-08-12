@@ -215,6 +215,7 @@ try:
         if not satellite.is_above_ground(R_EARTH):
             fig.text(0.5, 0.5, "SATELLITE HAS HIT THE GROUND!", color="red", fontsize=24, fontweight="bold", ha="center", va="center", zorder=100)
             fig.canvas.draw()
+            plot_area.pyplot(fig)
             plt.waitforbuttonpress()  # waits until key or mouse button pressed
             break
 
